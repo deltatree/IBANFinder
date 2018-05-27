@@ -11,13 +11,13 @@ dependencies {
 
 	compile 'org.apache.httpcomponents.client5:httpclient5-fluent:5.0-beta1'
 
-	compile 'org.iban4j:iban4j:3.2.1'
-	
 	compile 'com.fasterxml.jackson.core:jackson-core:2.9.4'
 	
 	compile 'com.fasterxml.jackson.core:jackson-databind:2.9.4'
 	
 	compile 'com.google.apis:google-api-services-customsearch:v1-rev60-1.23.0'
+	
+	 compile 'nl.garvelink.oss:iban:1.5.1'
 	
 	compileOnly 'org.projectlombok:lombok:1.16.20'
 	

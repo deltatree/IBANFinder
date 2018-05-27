@@ -10,18 +10,16 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.apache.hc.client5.http.fluent.Request;
-import org.iban4j.IbanUtil;
-import org.springframework.web.client.RestTemplate;
 
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.customsearch.Customsearch;
 import com.google.api.services.customsearch.model.Result;
 
-public class Main {
+import nl.garvelink.iban.IBAN;
+import nl.garvelink.iban.IBANFields;
 
-	private final static RestTemplate REST = new RestTemplate();
-	private final static String URL_TEMPLATE = "https://openiban.com/validate/{ibanString}?getBIC=true&validateBankCode=true";
+public class Main {
 
 	private final static Pattern PATTERN_IBAN = Pattern.compile(
 			"[a-zA-Z]{2}[0-9]{2}\\s?[a-zA-Z0-9]{4}\\s?[0-9]{4}\\s?[0-9]{3}([a-zA-Z0-9]\\s?[a-zA-Z0-9]{0,4}\\s?[a-zA-Z0-9]{0,4}\\s?[a-zA-Z0-9]{0,4}\\s?[a-zA-Z0-9]{0,3})?");
@@ -43,31 +41,24 @@ public class Main {
 
 	}
 
-	private static OpenIBANValidationResult validateOpenIBAN(String ibanString) {
-		try {
-			OpenIBANValidationResult oivr = REST.getForObject(URL_TEMPLATE, OpenIBANValidationResult.class, ibanString);
-			if (oivr.isValid()) {
-				return oivr;
-			}
-		} catch (Exception ignore) {
-			/* ignore */
-		}
+	private static void analyse(String uri) throws IOException {
+		Stream<String> distinct = stream(uri).flatMap(line -> MatcherStream.find(PATTERN_IBAN, line))
+				.map(result -> result.replaceAll("\\s{1,}", "")).distinct();
+		distinct.map(iban -> validateIBAN(iban)).filter(Objects::nonNull).forEach(iban -> doit(iban));
+	}
+
+	private static Object doit(IBAN iban) {
+		System.out.println(IBANFields.getBankIdentifier(iban));
+		System.out.println(iban);
 		return null;
 	}
 
-	private static void analyse(String uri) throws IOException {
-		stream(uri).flatMap(line -> MatcherStream.find(PATTERN_IBAN, line))
-				.map(result -> result.replaceAll("\\s{1,}", "")).distinct().filter(iban -> validateIBAN(iban))
-				.map(iban -> validateOpenIBAN(iban)).filter(Objects::nonNull).forEach(System.out::println);
-	}
-
-	private static boolean validateIBAN(String iban) {
+	private static IBAN validateIBAN(String iban) {
 		try {
-			IbanUtil.validate(iban);
+			return IBAN.parse(iban);
 		} catch (Exception e) {
-			return false;
+			return null;
 		}
-		return true;
 	}
 
 	private static Stream<String> stream(String uri) throws IOException {
