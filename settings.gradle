@@ -1,0 +1,3 @@
+include 'subprojects:finder'
+
+rootProject.name = 'IBANHelper'
